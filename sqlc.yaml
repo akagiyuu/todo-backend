@@ -2,7 +2,7 @@ version: "2"
 sql:
   - engine: "postgresql"
     queries: "internal/database/query/"
-    schema: "internal/database/migration/"
+    schema: "migration/"
     gen:
       go:
         package: "database"
@@ -10,6 +10,7 @@ sql:
         sql_package: "pgx/v5"
         emit_json_tags: true
         json_tags_case_style: camel
+        emit_pointers_for_null_types: true
         overrides:
           - db_type: "uuid"
             nullable: false
@@ -21,21 +22,3 @@ sql:
             go_type:
               import: "github.com/google/uuid"
               type: "UUID"
-          - db_type: "text"
-            nullable: true
-            go_type:
-              import: "github.com/moznion/go-optional"
-              package: "optional"
-              type: "Option[string]"
-          - db_type: "priority"
-            nullable: true
-            go_type:
-              import: "github.com/moznion/go-optional"
-              package: "optional"
-              type: "Option[Priority]"
-          - db_type: "bool"
-            nullable: true
-            go_type:
-              import: "github.com/moznion/go-optional"
-              package: "optional"
-              type: "Option[bool]"
