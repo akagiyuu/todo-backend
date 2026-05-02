@@ -1,9 +1,5 @@
 services:
-  backend:
-    image: ${REGISTRY}/backend:latest
+  api:
+    image: ${REGISTRY}/api:latest
     build:
-      context: .
       dockerfile: Dockerfile
-    profiles:
-      - backend
-      - build
