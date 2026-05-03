@@ -10,9 +10,9 @@ import (
 	"syscall"
 	"time"
 
-	"todo-api/internal/auth"
-	"todo-api/internal/database"
-	server "todo-api/internal/transports/http"
+	"github.com/akagiyuu/todo-api/internal/auth"
+	"github.com/akagiyuu/todo-api/internal/database"
+	server "github.com/akagiyuu/todo-api/internal/transports/http"
 
 	"github.com/go-fuego/fuego"
 )

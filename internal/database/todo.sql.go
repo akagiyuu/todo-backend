@@ -9,7 +9,6 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const createTodo = `-- name: CreateTodo :one
@@ -53,7 +52,7 @@ func (q *Queries) DeleteTodo(ctx context.Context, arg DeleteTodoParams) error {
 }
 
 const filterTodo = `-- name: FilterTodo :many
-SELECT id, title, content, priority, is_done, created_at
+SELECT id, account_id, title, content, priority, is_done, created_at
 FROM todos
 WHERE account_id = $1 AND
     (
@@ -68,20 +67,11 @@ WHERE account_id = $1 AND
 type FilterTodoParams struct {
 	AccountID uuid.UUID
 	Query     *string
-	Priority  NullPriority
+	Priority  *Priority
 	IsDone    *bool
 }
 
-type FilterTodoRow struct {
-	ID        uuid.UUID
-	Title     string
-	Content   string
-	Priority  Priority
-	IsDone    bool
-	CreatedAt pgtype.Timestamptz
-}
-
-func (q *Queries) FilterTodo(ctx context.Context, arg FilterTodoParams) ([]FilterTodoRow, error) {
+func (q *Queries) FilterTodo(ctx context.Context, arg FilterTodoParams) ([]Todo, error) {
 	rows, err := q.db.Query(ctx, filterTodo,
 		arg.AccountID,
 		arg.Query,
@@ -92,11 +82,12 @@ func (q *Queries) FilterTodo(ctx context.Context, arg FilterTodoParams) ([]Filte
 		return nil, err
 	}
 	defer rows.Close()
-	var items []FilterTodoRow
+	var items []Todo
 	for rows.Next() {
-		var i FilterTodoRow
+		var i Todo
 		if err := rows.Scan(
 			&i.ID,
+			&i.AccountID,
 			&i.Title,
 			&i.Content,
 			&i.Priority,
@@ -114,7 +105,7 @@ func (q *Queries) FilterTodo(ctx context.Context, arg FilterTodoParams) ([]Filte
 }
 
 const getTodo = `-- name: GetTodo :one
-SELECT title, content, priority, is_done, created_at
+SELECT id, account_id, title, content, priority, is_done, created_at
 FROM todos
 WHERE id = $1 AND account_id = $2
 `
@@ -124,18 +115,12 @@ type GetTodoParams struct {
 	AccountID uuid.UUID
 }
 
-type GetTodoRow struct {
-	Title     string
-	Content   string
-	Priority  Priority
-	IsDone    bool
-	CreatedAt pgtype.Timestamptz
-}
-
-func (q *Queries) GetTodo(ctx context.Context, arg GetTodoParams) (GetTodoRow, error) {
+func (q *Queries) GetTodo(ctx context.Context, arg GetTodoParams) (Todo, error) {
 	row := q.db.QueryRow(ctx, getTodo, arg.ID, arg.AccountID)
-	var i GetTodoRow
+	var i Todo
 	err := row.Scan(
+		&i.ID,
+		&i.AccountID,
 		&i.Title,
 		&i.Content,
 		&i.Priority,
@@ -157,7 +142,7 @@ WHERE id = $4 AND account_id = $5 AND is_done = false
 type UpdateTodoParams struct {
 	Title     *string
 	Content   *string
-	Priority  NullPriority
+	Priority  *Priority
 	ID        uuid.UUID
 	AccountID uuid.UUID
 }

@@ -4,12 +4,12 @@ VALUES (@account_id, @title, @content, @priority)
 RETURNING id;
 
 -- name: GetTodo :one
-SELECT title, content, priority, is_done, created_at
+SELECT *
 FROM todos
 WHERE id = @id AND account_id = @account_id;
 
 -- name: FilterTodo :many
-SELECT id, title, content, priority, is_done, created_at
+SELECT *
 FROM todos
 WHERE account_id = @account_id AND
     (

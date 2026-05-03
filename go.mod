@@ -1,4 +1,4 @@
-module todo-api
+module github.com/akagiyuu/todo-api
 
 go 1.26.2
 

@@ -2,10 +2,11 @@ package auth
 
 import (
 	"context"
-	"todo-api/internal/database"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"golang.org/x/crypto/bcrypt"
+
+	"github.com/akagiyuu/todo-api/internal/database"
 )
 
 type AuthService struct {
