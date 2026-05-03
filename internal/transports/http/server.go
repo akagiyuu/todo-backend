@@ -7,7 +7,7 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/go-fuego/fuego"
 
-	"todo-api/internal/auth"
+	"github.com/akagiyuu/todo-api/internal/auth"
 )
 
 type Server struct {
