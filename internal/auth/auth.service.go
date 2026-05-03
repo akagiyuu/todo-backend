@@ -9,8 +9,8 @@ import (
 )
 
 type AuthService struct {
-	Pool  *pgxpool.Pool
-	Token *TokenService
+	Pool         *pgxpool.Pool
+	TokenService *TokenService
 }
 
 type LoginRequest struct {
@@ -30,7 +30,7 @@ func (a *AuthService) Login(ctx context.Context, req LoginRequest) (string, erro
 		return "", err
 	}
 
-	return a.Token.Create(account.ID.String())
+	return a.TokenService.Create(account.ID.String())
 }
 
 type RegisterRequest struct {
@@ -53,5 +53,5 @@ func (a *AuthService) Register(ctx context.Context, req RegisterRequest) (string
 		return "", err
 	}
 
-	return a.Token.Create(id.String())
+	return a.TokenService.Create(id.String())
 }
