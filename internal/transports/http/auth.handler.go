@@ -2,11 +2,6 @@ package http
 
 import "github.com/go-fuego/fuego"
 
-type LoginRequest struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
-}
-
 func (s *Server) LoginHandler(c fuego.ContextWithBody[LoginRequest]) (string, error) {
 	req, err := c.Body()
 	if err != nil {
@@ -22,11 +17,6 @@ func (s *Server) LoginHandler(c fuego.ContextWithBody[LoginRequest]) (string, er
 	}
 
 	return token, nil
-}
-
-type RegisterRequest struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
 }
 
 func (s *Server) RegisterHandler(c fuego.ContextWithBody[RegisterRequest]) (string, error) {
