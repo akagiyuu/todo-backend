@@ -1,33 +1,32 @@
-package middleware
+package server
 
 import (
 	"context"
+	"fmt"
 	"net/http"
+	"os"
 	"strings"
 
-	"github.com/akagiyuu/todo-backend/internal/util"
 	"github.com/go-fuego/fuego"
 )
 
 const (
-	authorization         string = "Authorization"
-	bearer                string = "Bearer "
-	AuthorizationTokenKey string = "token"
+	authorization string = "Authorization"
+	bearer        string = "Bearer "
+	AuthKey       string = "id"
 )
 
-func RequireAuthentication(next http.Handler) http.Handler {
-	jwtUtil := util.NewJwtUtil()
-
+func (s *Server) AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		authHeader := r.Header.Get(authorization)
-		if authHeader == "" {
+		header := r.Header.Get(authorization)
+		if header == "" {
 			fuego.SendJSONError(w, nil, fuego.UnauthorizedError{
 				Detail: "Missing authorization header",
 			})
 			return
 		}
 
-		tokenString, isBearer := strings.CutPrefix(authHeader, bearer)
+		raw, isBearer := strings.CutPrefix(header, bearer)
 		if !isBearer {
 			fuego.SendJSONError(w, nil, fuego.UnauthorizedError{
 				Detail: "Missing authorization token",
@@ -35,7 +34,8 @@ func RequireAuthentication(next http.Handler) http.Handler {
 			return
 		}
 
-		token, err := jwtUtil.ParseToken(tokenString)
+		token, err := s.TokenService.Parse(raw)
+		fmt.Fprintf(os.Stderr, "DEBUGPRINT[96]: auth.middleware.go:37: token=%+v\n", token)
 		if err != nil {
 			fuego.SendJSONError(w, nil, fuego.UnauthorizedError{
 				Err:    err,
@@ -44,7 +44,7 @@ func RequireAuthentication(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), AuthorizationTokenKey, token)
+		ctx := context.WithValue(r.Context(), AuthKey, token)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

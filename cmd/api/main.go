@@ -5,27 +5,28 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
-	"github.com/akagiyuu/todo-backend/internal/server"
+	"github.com/akagiyuu/todo-api/internal/auth"
+	"github.com/akagiyuu/todo-api/internal/database"
+	"github.com/akagiyuu/todo-api/internal/server"
+	"github.com/akagiyuu/todo-api/internal/todo"
+
 	"github.com/go-fuego/fuego"
 )
 
 func gracefulShutdown(apiServer *fuego.Server, done chan bool) {
-	// Create context that listens for the interrupt signal from the OS.
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	// Listen for the interrupt signal.
 	<-ctx.Done()
 
 	log.Println("shutting down gracefully, press Ctrl+C again to force")
-	stop() // Allow Ctrl+C to force shutdown
+	stop()
 
-	// The context is used to inform the server it has 5 seconds to finish
-	// the request it is currently handling
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	if err := apiServer.Shutdown(ctx); err != nil {
@@ -34,32 +35,42 @@ func gracefulShutdown(apiServer *fuego.Server, done chan bool) {
 
 	log.Println("Server exiting")
 
-	// Notify the main goroutine that the shutdown is complete
 	done <- true
 }
 
-// @title           Todo API
-// @version         1.0
-// @BasePath        /
-// @securityDefinitions.apiKey  BearerAuth
-// @in                          header
-// @name                        Authorization
-// @description                 JWT access token in format “Bearer {token}”
 func main() {
-	server := server.NewServer()
+	pool, err := database.NewPool(os.Getenv("DATABASE_URL"))
+	if err != nil {
+		panic(err)
+	}
 
-	// Create a done channel to signal when the shutdown is complete
+	tokenService, err := auth.NewTokenService()
+	if err != nil {
+		panic(err)
+	}
+
+	authService := &auth.AuthService{
+		Pool:         pool,
+		TokenService: tokenService,
+	}
+
+	todoService := &todo.TodoService{Pool: pool}
+
+	s, err := server.NewServer(authService, todoService)
+	if err != nil {
+		panic(err)
+	}
+	server := s.Build()
+
 	done := make(chan bool, 1)
 
-	// Run graceful shutdown in a separate goroutine
 	go gracefulShutdown(server, done)
 
-	err := server.Run()
+	err = server.Run()
 	if err != nil && err != http.ErrServerClosed {
 		panic(fmt.Sprintf("http server error: %s", err))
 	}
 
-	// Wait for the graceful shutdown to complete
 	<-done
 	log.Println("Graceful shutdown complete.")
 }

@@ -2,44 +2,26 @@ services:
   database:
     container_name: todo-database
     image: postgres:latest
-    restart: unless-stopped
+    restart: on-failure:5
     environment:
-      POSTGRES_DB: ${DATABASE_DB}
-      POSTGRES_USER: ${DATABASE_USER}
-      POSTGRES_PASSWORD: ${DATABASE_PASS}
+      POSTGRES_USER: ${PG_USER}
+      POSTGRES_PASSWORD: ${PG_PASS}
+      POSTGRES_DB: ${PG_DB}
     volumes:
-      - database:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "sh -c 'pg_isready -U ${DATABASE_USER} -d ${DATABASE_DB}'"]
-      interval: 5s
-      timeout: 5s
-      retries: 3
-      start_period: 15s
+      - database:/var/lib/postgresql
     networks:
-      - network
-    profiles:
-      - backend
-      - deploy
+      - internal
 
-  backend:
-    container_name: todo-backend
-    image: ${REGISTRY}/backend:latest
-    restart: unless-stopped
-    ports:
-      - 3000:3000
+  api:
+    container_name: todo-api
+    image: ${REGISTRY}/api:latest
+    restart: on-failure:5
     environment:
-      DATABASE_DB: ${DATABASE_DB}
-      DATABASE_USER: ${DATABASE_USER}
-      DATABASE_PASS: ${DATABASE_PASS}
-      DATABASE_HOST: database
+      DATABASE_URL: postgres://${PG_USER}:${PG_PASS}@database/${PG_DB}
     depends_on:
-      database:
-        condition: service_healthy
+      - database
     networks:
-      - network
-    profiles:
-      - backend
-      - deploy
+      - internal
 
 volumes:
   database:
@@ -47,6 +29,6 @@ volumes:
     external: true
 
 networks:
-  network:
+  internal:
     name: todo-network
     external: true

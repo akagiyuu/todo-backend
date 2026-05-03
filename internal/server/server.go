@@ -2,43 +2,56 @@ package server
 
 import (
 	"fmt"
-	"net/http"
 
 	"github.com/caarlos0/env/v11"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/go-fuego/fuego"
-	_ "github.com/joho/godotenv/autoload"
-	httpSwagger "github.com/swaggo/http-swagger/v2"
+	"github.com/gorilla/schema"
 
-	"github.com/akagiyuu/todo-backend/internal/config"
-	"github.com/akagiyuu/todo-backend/internal/controller/auth"
-	"github.com/akagiyuu/todo-backend/internal/controller/ping"
-	"github.com/akagiyuu/todo-backend/internal/controller/todo"
-	"github.com/akagiyuu/todo-backend/internal/middleware"
+	"github.com/akagiyuu/todo-api/internal/auth"
+	"github.com/akagiyuu/todo-api/internal/todo"
 )
 
-func openApiHandler(specURL string) http.Handler {
-	return httpSwagger.Handler(
-		httpSwagger.Layout(httpSwagger.BaseLayout),
-		httpSwagger.PersistAuthorization(true),
-		httpSwagger.URL(specURL),
-	)
+type Server struct {
+	Config Config
+
+	Decoder *schema.Decoder
+
+	AuthService  *auth.AuthService
+	TokenService *auth.TokenService
+	TodoService  *todo.TodoService
 }
 
-func NewServer() *fuego.Server {
-	cfg, _ := env.ParseAs[config.ServerConfig]()
+func NewServer(
+	authService *auth.AuthService,
+	todoService *todo.TodoService,
+) (*Server, error) {
+	cfg, err := env.ParseAs[Config]()
+	if err != nil {
+		return nil, err
+	}
 
-	s := fuego.NewServer(
-		fuego.WithAddr(fmt.Sprintf(":%d", cfg.Port)),
-		fuego.WithGlobalMiddlewares(middleware.Cors),
+	return &Server{
+		Config:       cfg,
+		Decoder:      schema.NewDecoder(),
+		AuthService:  authService,
+		TokenService: authService.TokenService,
+		TodoService:  todoService,
+	}, nil
+}
+
+func (s *Server) Build() *fuego.Server {
+	f := fuego.NewServer(
+		fuego.WithAddr(fmt.Sprintf(":%d", s.Config.Port)),
+		fuego.WithGlobalMiddlewares(s.CorsMiddleware),
 		fuego.WithEngineOptions(
 			fuego.WithOpenAPIConfig(fuego.OpenAPIConfig{
-				UIHandler:            openApiHandler,
+				UIHandler:            s.OpenAPIHandler,
 				DisableDefaultServer: true,
 				DisableMessages:      true,
 				Info: &openapi3.Info{
-					Title:       "Todo API",
-					Description: "Todo API",
+					Title:       "General Service",
+					Description: "General Service",
 				},
 			}),
 		),
@@ -52,13 +65,7 @@ func NewServer() *fuego.Server {
 			},
 		}),
 	)
-	s.Engine.OutputOpenAPISpec().AddServer(&openapi3.Server{
-		URL: cfg.Url,
-	})
+	s.RegisterRoutes(f)
 
-	ping.RegisterRoutes(s)
-	auth.RegisterRoutes(s)
-	todo.RegisterRoutes(s)
-
-	return s
+	return f
 }
