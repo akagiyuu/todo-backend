@@ -1,18 +1,19 @@
 package http
 
-import (
-	"todo-api/internal/auth"
+import "github.com/go-fuego/fuego"
 
-	"github.com/go-fuego/fuego"
-)
+type LoginRequest struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
 
-func (s *Server) LoginHandler(c fuego.ContextWithBody[auth.LoginRequest]) (string, error) {
+func (s *Server) LoginHandler(c fuego.ContextWithBody[LoginRequest]) (string, error) {
 	req, err := c.Body()
 	if err != nil {
 		return "", err
 	}
 
-	token, err := s.AuthService.Login(c.Context(), req)
+	token, err := s.AuthService.Login(c.Context(), req.Email, req.Password)
 	if err != nil {
 		return "", fuego.BadRequestError{
 			Err:    err,
@@ -23,13 +24,18 @@ func (s *Server) LoginHandler(c fuego.ContextWithBody[auth.LoginRequest]) (strin
 	return token, nil
 }
 
-func (s *Server) RegisterHandler(c fuego.ContextWithBody[auth.RegisterRequest]) (string, error) {
+type RegisterRequest struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+func (s *Server) RegisterHandler(c fuego.ContextWithBody[RegisterRequest]) (string, error) {
 	req, err := c.Body()
 	if err != nil {
 		return "", err
 	}
 
-	token, err := s.AuthService.Register(c.Context(), req)
+	token, err := s.AuthService.Register(c.Context(), req.Email, req.Password)
 	if err != nil {
 		return "", fuego.BadRequestError{
 			Err:    err,

@@ -13,19 +13,18 @@ type AuthService struct {
 	TokenService *TokenService
 }
 
-type LoginRequest struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
-}
-
-func (a *AuthService) Login(ctx context.Context, req LoginRequest) (string, error) {
+func (a *AuthService) Login(
+	ctx context.Context,
+	email string,
+	password string,
+) (string, error) {
 	queries := database.New(a.Pool)
-	account, err := queries.GetAccountByEmail(ctx, req.Email)
+	account, err := queries.GetAccountByEmail(ctx, email)
 	if err != nil {
 		return "", err
 	}
 
-	err = bcrypt.CompareHashAndPassword([]byte(account.Password), []byte(req.Password))
+	err = bcrypt.CompareHashAndPassword([]byte(account.Password), []byte(password))
 	if err != nil {
 		return "", err
 	}
@@ -33,22 +32,18 @@ func (a *AuthService) Login(ctx context.Context, req LoginRequest) (string, erro
 	return a.TokenService.Create(account.ID.String())
 }
 
-type RegisterRequest struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
-}
-
-func (a *AuthService) Register(ctx context.Context, req RegisterRequest) (string, error) {
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+func (a *AuthService) Register(
+	ctx context.Context,
+	email string,
+	password string,
+) (string, error) {
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		return "", err
 	}
 
 	queries := database.New(a.Pool)
-	id, err := queries.CreateAccount(ctx, database.CreateAccountParams{
-		Email:    req.Email,
-		Password: string(hashedPassword),
-	})
+	id, err := queries.CreateAccount(ctx, database.CreateAccountParams{Email: email, Password: string(hashedPassword)})
 	if err != nil {
 		return "", err
 	}
