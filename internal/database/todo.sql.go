@@ -19,10 +19,10 @@ RETURNING id
 `
 
 type CreateTodoParams struct {
-	AccountID uuid.UUID `json:"accountId"`
-	Title     string    `json:"title"`
-	Content   string    `json:"content"`
-	Priority  Priority  `json:"priority"`
+	AccountID uuid.UUID
+	Title     string
+	Content   string
+	Priority  Priority
 }
 
 func (q *Queries) CreateTodo(ctx context.Context, arg CreateTodoParams) (uuid.UUID, error) {
@@ -43,8 +43,8 @@ WHERE id = $1 AND account_id = $2
 `
 
 type DeleteTodoParams struct {
-	ID        uuid.UUID `json:"id"`
-	AccountID uuid.UUID `json:"accountId"`
+	ID        uuid.UUID
+	AccountID uuid.UUID
 }
 
 func (q *Queries) DeleteTodo(ctx context.Context, arg DeleteTodoParams) error {
@@ -66,19 +66,19 @@ WHERE account_id = $1 AND
 `
 
 type FilterTodoParams struct {
-	AccountID uuid.UUID    `json:"accountId"`
-	Query     *string      `json:"query"`
-	Priority  NullPriority `json:"priority"`
-	IsDone    *bool        `json:"isDone"`
+	AccountID uuid.UUID
+	Query     *string
+	Priority  NullPriority
+	IsDone    *bool
 }
 
 type FilterTodoRow struct {
-	ID        uuid.UUID          `json:"id"`
-	Title     string             `json:"title"`
-	Content   string             `json:"content"`
-	Priority  Priority           `json:"priority"`
-	IsDone    bool               `json:"isDone"`
-	CreatedAt pgtype.Timestamptz `json:"createdAt"`
+	ID        uuid.UUID
+	Title     string
+	Content   string
+	Priority  Priority
+	IsDone    bool
+	CreatedAt pgtype.Timestamptz
 }
 
 func (q *Queries) FilterTodo(ctx context.Context, arg FilterTodoParams) ([]FilterTodoRow, error) {
@@ -120,16 +120,16 @@ WHERE id = $1 AND account_id = $2
 `
 
 type GetTodoParams struct {
-	ID        uuid.UUID `json:"id"`
-	AccountID uuid.UUID `json:"accountId"`
+	ID        uuid.UUID
+	AccountID uuid.UUID
 }
 
 type GetTodoRow struct {
-	Title     string             `json:"title"`
-	Content   string             `json:"content"`
-	Priority  Priority           `json:"priority"`
-	IsDone    bool               `json:"isDone"`
-	CreatedAt pgtype.Timestamptz `json:"createdAt"`
+	Title     string
+	Content   string
+	Priority  Priority
+	IsDone    bool
+	CreatedAt pgtype.Timestamptz
 }
 
 func (q *Queries) GetTodo(ctx context.Context, arg GetTodoParams) (GetTodoRow, error) {
@@ -155,11 +155,11 @@ WHERE id = $4 AND account_id = $5 AND is_done = false
 `
 
 type UpdateTodoParams struct {
-	Title     *string      `json:"title"`
-	Content   *string      `json:"content"`
-	Priority  NullPriority `json:"priority"`
-	ID        uuid.UUID    `json:"id"`
-	AccountID uuid.UUID    `json:"accountId"`
+	Title     *string
+	Content   *string
+	Priority  NullPriority
+	ID        uuid.UUID
+	AccountID uuid.UUID
 }
 
 func (q *Queries) UpdateTodo(ctx context.Context, arg UpdateTodoParams) error {

@@ -33,8 +33,8 @@ func (e *Priority) Scan(src interface{}) error {
 }
 
 type NullPriority struct {
-	Priority Priority `json:"priority"`
-	Valid    bool     `json:"valid"` // Valid is true if Priority is not NULL
+	Priority Priority
+	Valid    bool // Valid is true if Priority is not NULL
 }
 
 // Scan implements the Scanner interface.
@@ -56,17 +56,17 @@ func (ns NullPriority) Value() (driver.Value, error) {
 }
 
 type Account struct {
-	ID       uuid.UUID `json:"id"`
-	Email    string    `json:"email"`
-	Password string    `json:"password"`
+	ID       uuid.UUID
+	Email    string
+	Password string
 }
 
 type Todo struct {
-	ID        uuid.UUID          `json:"id"`
-	AccountID uuid.UUID          `json:"accountId"`
-	Title     string             `json:"title"`
-	Content   string             `json:"content"`
-	Priority  Priority           `json:"priority"`
-	IsDone    bool               `json:"isDone"`
-	CreatedAt pgtype.Timestamptz `json:"createdAt"`
+	ID        uuid.UUID
+	AccountID uuid.UUID
+	Title     string
+	Content   string
+	Priority  Priority
+	IsDone    bool
+	CreatedAt pgtype.Timestamptz
 }
