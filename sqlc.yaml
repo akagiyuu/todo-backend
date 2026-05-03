@@ -20,3 +20,8 @@ sql:
             go_type:
               import: "github.com/google/uuid"
               type: "UUID"
+          - db_type: "priority"
+            nullable: true
+            go_type:
+              type: "Priority"
+              pointer: true
