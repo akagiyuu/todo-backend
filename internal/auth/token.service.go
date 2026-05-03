@@ -14,8 +14,7 @@ var (
 )
 
 type TokenService struct {
-	Secret    []byte
-	ExpiredIn int
+	Config TokenConfig
 }
 
 func NewTokenService() (*TokenService, error) {
@@ -24,20 +23,17 @@ func NewTokenService() (*TokenService, error) {
 		return nil, err
 	}
 
-	return &TokenService{
-		Secret:    cfg.Secret,
-		ExpiredIn: cfg.ExpiredIn,
-	}, nil
+	return &TokenService{Config: cfg}, nil
 }
 
 func (t *TokenService) Create(subject string) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"sub": subject,
-		"exp": time.Now().Add(time.Duration(t.ExpiredIn) * time.Minute).Unix(),
+		"exp": time.Now().Add(time.Duration(t.Config.ExpiredIn) * time.Minute).Unix(),
 		"iat": time.Now().Unix(),
 	})
 
-	tokenString, err := token.SignedString(t.Secret)
+	tokenString, err := token.SignedString(t.Config.Secret)
 	if err != nil {
 		return "", err
 	}
@@ -47,7 +43,7 @@ func (t *TokenService) Create(subject string) (string, error) {
 
 func (t *TokenService) Parse(raw string) (uuid.UUID, error) {
 	token, err := jwt.Parse(raw, func(token *jwt.Token) (any, error) {
-		return t.Secret, nil
+		return t.Config.Secret, nil
 	})
 	if err != nil {
 		return uuid.Nil, err
