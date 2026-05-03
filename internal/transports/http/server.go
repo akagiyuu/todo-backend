@@ -2,16 +2,32 @@ package http
 
 import (
 	"fmt"
-	"todo-backend/internal/auth"
 
+	"github.com/caarlos0/env/v11"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/go-fuego/fuego"
+
+	"todo-api/internal/auth"
 )
 
 type Server struct {
-	Config *Config
+	Config Config
 
-	AuthService *auth.AuthService
+	AuthService  *auth.AuthService
+	TokenService *auth.TokenService
+}
+
+func NewServer(authService *auth.AuthService) (*Server, error) {
+	cfg, err := env.ParseAs[Config]()
+	if err != nil {
+		return nil, err
+	}
+
+	return &Server{
+		Config:       cfg,
+		AuthService:  authService,
+		TokenService: authService.TokenService,
+	}, nil
 }
 
 func (s *Server) Build() *fuego.Server {

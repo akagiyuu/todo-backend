@@ -5,14 +5,19 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
-	"todo-backend/internal/server"
+	"todo-api/internal/auth"
+	"todo-api/internal/database"
+	server "todo-api/internal/transports/http"
+
+	"github.com/go-fuego/fuego"
 )
 
-func gracefulShutdown(apiServer *http.Server, done chan bool) {
+func gracefulShutdown(apiServer *fuego.Server, done chan bool) {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
@@ -33,14 +38,32 @@ func gracefulShutdown(apiServer *http.Server, done chan bool) {
 }
 
 func main() {
+	pool, err := database.NewPool(os.Getenv("DATABASE_URL"))
+	if err != nil {
+		panic(err)
+	}
 
-	server := server.NewServer()
+	tokenService, err := auth.NewTokenService()
+	if err != nil {
+		panic(err)
+	}
+
+	authService := &auth.AuthService{
+		Pool:         pool,
+		TokenService: tokenService,
+	}
+
+	s, err := server.NewServer(authService)
+	if err != nil {
+		panic(err)
+	}
+	server := s.Build()
 
 	done := make(chan bool, 1)
 
 	go gracefulShutdown(server, done)
 
-	err := server.ListenAndServe()
+	err = server.Run()
 	if err != nil && err != http.ErrServerClosed {
 		panic(fmt.Sprintf("http server error: %s", err))
 	}

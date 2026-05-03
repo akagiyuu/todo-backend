@@ -2,7 +2,7 @@ package auth
 
 import (
 	"context"
-	"todo-backend/internal/database"
+	"todo-api/internal/database"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"golang.org/x/crypto/bcrypt"
