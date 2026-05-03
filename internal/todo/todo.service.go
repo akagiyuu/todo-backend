@@ -19,14 +19,14 @@ func (t *TodoService) Create(
 	accountID uuid.UUID,
 	title string,
 	content string,
-	priority database.Priority,
+	priority Priority,
 ) (uuid.UUID, error) {
 	queries := database.New(t.Pool)
 	return queries.CreateTodo(ctx, database.CreateTodoParams{
 		AccountID: accountID,
 		Title:     title,
 		Content:   content,
-		Priority:  priority,
+		Priority:  (database.Priority)(priority),
 	})
 }
 
@@ -34,25 +34,34 @@ func (t *TodoService) Filter(
 	ctx context.Context,
 	accountID uuid.UUID,
 	query *string,
-	priority *database.Priority,
+	priority *Priority,
 	isDone *bool,
-) ([]database.Todo, error) {
+) ([]Todo, error) {
 	queries := database.New(t.Pool)
-	return queries.FilterTodo(ctx, database.FilterTodoParams{
+	raws, err := queries.FilterTodo(ctx, database.FilterTodoParams{
 		AccountID: accountID,
 		Query:     query,
 		IsDone:    isDone,
-		Priority:  priority,
+		Priority:  (*database.Priority)(priority),
 	})
+	if err != nil {
+		return nil, err
+	}
+
+	todos := make([]Todo, len(raws))
+	for i, raw := range raws {
+		todos[i] = ParseTodo(raw)
+	}
+	return todos, nil
 }
 
 func (t *TodoService) Get(
 	ctx context.Context,
 	accountID uuid.UUID,
 	id uuid.UUID,
-) (*database.Todo, error) {
+) (*Todo, error) {
 	queries := database.New(t.Pool)
-	todo, err := queries.GetTodo(ctx, database.GetTodoParams{
+	raw, err := queries.GetTodo(ctx, database.GetTodoParams{
 		AccountID: accountID,
 		ID:        id,
 	})
@@ -62,6 +71,7 @@ func (t *TodoService) Get(
 	if err != nil {
 		return nil, err
 	}
+	todo := ParseTodo(raw)
 
 	return &todo, nil
 }
@@ -72,7 +82,7 @@ func (t *TodoService) Update(
 	id uuid.UUID,
 	title *string,
 	content *string,
-	priority *database.Priority,
+	priority *Priority,
 ) error {
 	queries := database.New(t.Pool)
 	return queries.UpdateTodo(ctx, database.UpdateTodoParams{
@@ -80,7 +90,7 @@ func (t *TodoService) Update(
 		ID:        id,
 		Title:     title,
 		Content:   content,
-		Priority:  priority,
+		Priority:  (*database.Priority)(priority),
 	})
 }
 

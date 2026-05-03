@@ -1,4 +1,4 @@
-package http
+package server
 
 import (
 	"fmt"
@@ -6,18 +6,26 @@ import (
 	"github.com/caarlos0/env/v11"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/go-fuego/fuego"
+	"github.com/gorilla/schema"
 
 	"github.com/akagiyuu/todo-api/internal/auth"
+	"github.com/akagiyuu/todo-api/internal/todo"
 )
 
 type Server struct {
 	Config Config
 
+	Decoder *schema.Decoder
+
 	AuthService  *auth.AuthService
 	TokenService *auth.TokenService
+	TodoService  *todo.TodoService
 }
 
-func NewServer(authService *auth.AuthService) (*Server, error) {
+func NewServer(
+	authService *auth.AuthService,
+	todoService *todo.TodoService,
+) (*Server, error) {
 	cfg, err := env.ParseAs[Config]()
 	if err != nil {
 		return nil, err
@@ -25,8 +33,10 @@ func NewServer(authService *auth.AuthService) (*Server, error) {
 
 	return &Server{
 		Config:       cfg,
+		Decoder:      schema.NewDecoder(),
 		AuthService:  authService,
 		TokenService: authService.TokenService,
+		TodoService:  todoService,
 	}, nil
 }
 

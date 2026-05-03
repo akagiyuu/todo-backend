@@ -12,7 +12,8 @@ import (
 
 	"github.com/akagiyuu/todo-api/internal/auth"
 	"github.com/akagiyuu/todo-api/internal/database"
-	server "github.com/akagiyuu/todo-api/internal/transports/http"
+	"github.com/akagiyuu/todo-api/internal/server"
+	"github.com/akagiyuu/todo-api/internal/todo"
 
 	"github.com/go-fuego/fuego"
 )
@@ -53,7 +54,9 @@ func main() {
 		TokenService: tokenService,
 	}
 
-	s, err := server.NewServer(authService)
+	todoService := &todo.TodoService{Pool: pool}
+
+	s, err := server.NewServer(authService, todoService)
 	if err != nil {
 		panic(err)
 	}

@@ -1,8 +1,10 @@
-package http
+package server
 
 import (
 	"context"
+	"fmt"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/go-fuego/fuego"
@@ -33,6 +35,7 @@ func (s *Server) AuthMiddleware(next http.Handler) http.Handler {
 		}
 
 		token, err := s.TokenService.Parse(raw)
+		fmt.Fprintf(os.Stderr, "DEBUGPRINT[96]: auth.middleware.go:37: token=%+v\n", token)
 		if err != nil {
 			fuego.SendJSONError(w, nil, fuego.UnauthorizedError{
 				Err:    err,
